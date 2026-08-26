@@ -1,0 +1,19 @@
+{
+  "id": "underline",
+  "name": "%underline.name%",
+  "version": "1.0.0",
+  "summary": "%underline.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor"],
+  "nls": {
+    "default": {
+      "underline.name": "밑줄",
+      "underline.summary": "++텍스트++에 밑줄"
+    },
+    "en": {
+      "underline.name": "Underline",
+      "underline.summary": "Underlines ++text++"
+    }
+  }
+}

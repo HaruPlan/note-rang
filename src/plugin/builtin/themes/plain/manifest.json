@@ -1,0 +1,17 @@
+{
+  "id": "plain",
+  "name": "plain",
+  "version": "1.0.0",
+  "summary": "%plain.summary%",
+  "kind": "capability",
+  "entry": "main.js",
+  "permissions": ["theme"],
+  "nls": {
+    "default": {
+      "plain.summary": "무채색 슬레이트의 미니멀 테마"
+    },
+    "en": {
+      "plain.summary": "Minimal theme in achromatic slate"
+    }
+  }
+}

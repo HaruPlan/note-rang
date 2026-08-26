@@ -1,0 +1,34 @@
+{
+  "id": "copy-ai-prompt",
+  "name": "%copy-ai-prompt.name%",
+  "version": "1.0.0",
+  "summary": "%copy-ai-prompt.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["ui", "clipboard", "notes:read", "settings", "commands"],
+  "settingsCategory": "도구",
+  "settings": [
+    {
+      "key": "template",
+      "label": "%copy-ai-prompt.settings.template.label%",
+      "type": "text",
+      "default": "{path}",
+      "options": [],
+      "description": "%copy-ai-prompt.settings.template.description%"
+    }
+  ],
+  "nls": {
+    "default": {
+      "copy-ai-prompt.name": "복사하기",
+      "copy-ai-prompt.summary": "메모를 미리 정한 문구 템플릿에 담아 클립보드로 복사해요 — AI 프롬프트 만들 때 유용해요",
+      "copy-ai-prompt.settings.template.label": "복사 문구",
+      "copy-ai-prompt.settings.template.description": "사용 가능한 변수:\n{path} — 노트 파일 절대경로\n{content} — 노트 내용(현재 본문)\n\n예: \"아래 메모를 요약해줘:\\n\\n{content}\""
+    },
+    "en": {
+      "copy-ai-prompt.name": "Copy",
+      "copy-ai-prompt.summary": "Copies the note into a template you define — handy for building AI prompts",
+      "copy-ai-prompt.settings.template.label": "Copy template",
+      "copy-ai-prompt.settings.template.description": "Available variables:\n{path} — the note file's absolute path\n{content} — the note's content (current body)\n\nExample: \"Summarize the note below:\\n\\n{content}\""
+    }
+  }
+}

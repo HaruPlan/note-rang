@@ -1,0 +1,19 @@
+{
+  "id": "kbd",
+  "name": "%kbd.name%",
+  "version": "1.0.0",
+  "summary": "%kbd.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor"],
+  "nls": {
+    "default": {
+      "kbd.name": "키 표시",
+      "kbd.summary": "{{Cmd+C}}를 키보드 키 모양으로"
+    },
+    "en": {
+      "kbd.name": "Keycap",
+      "kbd.summary": "Renders {{Cmd+C}} as a keyboard key"
+    }
+  }
+}

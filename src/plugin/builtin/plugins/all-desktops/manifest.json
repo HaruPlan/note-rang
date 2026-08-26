@@ -1,0 +1,20 @@
+{
+  "id": "all-desktops",
+  "name": "%all-desktops.name%",
+  "version": "1.0.0",
+  "summary": "%all-desktops.summary%",
+  "kind": "capability",
+  "entry": "main.js",
+  "permissions": ["window-control"],
+  "platforms": ["macos"],
+  "nls": {
+    "default": {
+      "all-desktops.name": "모든 데스크탑",
+      "all-desktops.summary": "노트를 모든 데스크탑에 표시 (macOS)"
+    },
+    "en": {
+      "all-desktops.name": "All Desktops",
+      "all-desktops.summary": "Show notes on all desktops (macOS)"
+    }
+  }
+}

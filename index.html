@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <title>Note Rang</title>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <main id="app"></main>
+    <!-- 설정 반영 리로드의 깜빡임 제거(노트 창 전용) — 동기 클래식 스크립트라 **첫 페인트
+         전에** 실행된다. 위의 `/src/main.ts`는 모듈(=defer 의미론)이라 언제나 이보다 늦으므로,
+         head에 먼저 적혀 있어도 순서가 뒤집히지 않는다. `public/`에 두어 Vite가 변환하지 않고
+         dist로 그대로 복사하게 하고(성질 유지), 인라인이 아닌 외부 파일이라 앱 CSP의
+         `script-src 'self'`에 그대로 걸린다. 스냅샷이 없으면(첫 로드) 즉시 아무 일도 하지 않고
+         빠진다. 자세한 계약은 그 파일과 `src/bootstrap/reload-overlay.ts` 참고. -->
+    <script src="/reload-boot.js"></script>
+  </body>
+</html>

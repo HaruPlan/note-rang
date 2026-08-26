@@ -1,0 +1,350 @@
+# 릴리스 — macOS 유니버설 DMG와 Windows 설치 파일을 updater 아티팩트와 함께 GitHub Release
+# 초안에 올린다. 절차·키 관리는 docs/contributing/release.md 참고.
+#
+# 진입점이 둘이다.
+# - **`workflow_dispatch` + 버전 입력**(권장): `prepare` 잡이 세 파일의 버전을 올려 커밋하고
+#   태그를 만든 뒤, 빌드 잡이 그 태그를 체크아웃한다. 버전 올리기·태그·빌드가 한 실행 안에
+#   묶여 있어 중간에서 끊길 자리가 없다.
+# - **`v*` 태그 푸시**: 사람이 직접 올리고 태그를 민 경우. `prepare`는 태그가 가리키는 버전이
+#   세 파일과 일치하는지만 확인하고 통과시킨다.
+#
+# 왜 잡을 둘로 쪼개지 않고 한 워크플로에 묶었나: `GITHUB_TOKEN`으로 민 태그는 **다른 워크플로를
+# 깨우지 않는다**(GitHub의 무한루프 방지). 태그 푸시가 빌드를 유발할 거라 기대하는 구성은
+# 조용히 아무 일도 하지 않는다. `needs:`로 같은 실행 안에서 잇는 쪽이 토큰도 안 늘고 확실하다.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "릴리스 버전 (v 없이, 예: 0.2.0)"
+        required: true
+        type: string
+
+jobs:
+  # 버전을 확정한다 — 입력이 있으면 올려 커밋·태그하고, 태그 푸시면 검증만 한다.
+  # 어느 경로든 출력 `tag`가 이후 잡들의 유일한 기준점이 된다.
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # 러너에 node가 이미 있지만 버전을 고정한다 — `npm version`과 아래 검증의 `node -p`가
+      # 러너 이미지 갱신에 따라 흔들리지 않게.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: 버전 확정
+        id: resolve
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_VERSION:-}" ]; then
+            VERSION="${INPUT_VERSION#v}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          # semver가 아니면 여기서 끊는다 — updater는 semver로 비교하므로 형식이 어긋난
+          # 버전이 나가면 클라이언트가 업데이트를 영영 못 찾는다(파싱 실패).
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::버전 형식이 semver가 아닙니다: '$VERSION'"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: 태그 중복 확인
+        if: inputs.version != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::태그 $TAG 가 이미 있습니다. 다른 버전을 쓰거나 태그를 지우세요."
+            exit 1
+          fi
+
+      # 버전이 사는 곳은 네 군데다(package.json / package-lock.json / Cargo.toml+lock /
+      # tauri.conf.json). updater가 비교하는 현재 버전은 tauri.conf.json의 값이고, 나머지가
+      # 어긋나면 산출물 파일명과 릴리스 표기가 서로 다른 값을 말하게 된다.
+      - name: 버전 올리기
+        if: inputs.version != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.resolve.outputs.version }}"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null
+          # `[package]`의 첫 version 줄만 바꾼다(의존성 줄에는 손대지 않는다).
+          perl -0pi -e 's/^version = "[^"]*"$/version = "'"$VERSION"'"/m' src-tauri/Cargo.toml
+          # Cargo.lock의 자기 자신 항목. 빌드가 자동으로 고쳐 주지만, 커밋된 lock이 낡으면
+          # 다음 사람이 예상치 못한 diff를 보게 된다. name 바로 다음 version 줄만 친다.
+          perl -0pi -e 's/(\[\[package\]\]\nname = "note-rang"\nversion = )"[^"]*"/${1}"'"$VERSION"'"/' src-tauri/Cargo.lock
+          perl -0pi -e 's/^(  "version": )"[^"]*"/${1}"'"$VERSION"'"/m' src-tauri/tauri.conf.json
+
+      # 가드: 세 파일이 같은 값을 말하는지 확인한다. 태그 푸시 경로에서는 사람이 손으로 올린
+      # 값이 태그와 어긋났는지도 여기서 걸린다(릴리스가 나간 뒤에는 고칠 수 없다).
+      - name: 버전 일치 확인
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.resolve.outputs.version }}"
+          PKG=$(node -p "require('./package.json').version")
+          CONF=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          CARGO=$(grep -m1 '^version = ' src-tauri/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "tag=$VERSION package.json=$PKG tauri.conf.json=$CONF Cargo.toml=$CARGO"
+          if [ "$PKG" != "$VERSION" ] || [ "$CONF" != "$VERSION" ] || [ "$CARGO" != "$VERSION" ]; then
+            echo "::error::버전이 서로 다릅니다. 세 파일을 $VERSION 으로 맞추세요."
+            exit 1
+          fi
+
+      - name: 커밋·태그 푸시
+        if: inputs.version != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.resolve.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # 이미 그 버전으로 올라가 있으면(재시도 등) 커밋할 것이 없다 — 태그만 새로 단다.
+          if git diff --quiet; then
+            echo "버전 파일에 변경 없음 — 커밋을 건너뜁니다."
+          else
+            git commit -am "chore(release): $TAG"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+          git tag "$TAG"
+          # 이 태그 푸시는 위쪽 `on.push.tags`를 **깨우지 않는다**(GITHUB_TOKEN 푸시).
+          # 의도된 동작이다 — 빌드는 아래 `needs: prepare` 잡이 이어서 한다(중복 빌드 없음).
+          git push origin "$TAG"
+
+  release:
+    needs: prepare
+    permissions:
+      contents: write
+    strategy:
+      # 한쪽 OS가 깨져도 다른 쪽 산출물은 받아 둔다 — 초안이라 어차피 사람이 게시를 결정한다.
+      fail-fast: false
+      # **순차 실행이 필수다.** tauri-action은 릴리스에 이미 올라간 `latest.json`을 내려받아
+      # `platforms` 맵을 승계한 뒤 자기 플랫폼 키만 얹는다(병합은 된다). 그런데 이것은
+      # 읽기-고치기-쓰기라, 두 잡이 겹쳐 돌면 나중에 쓴 쪽이 상대 플랫폼 키를 통째로 날린다
+      # (lost update). 그러면 한쪽 OS의 자동 업데이트가 조용히 끊긴다.
+      max-parallel: 1
+      matrix:
+        include:
+          - platform: macos-14
+            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
+            # 유니버설로 낸다 — 단일 아키텍처 빌드는 반대편 Mac에서 실행 자체가 안 된다.
+            args: '--target universal-apple-darwin --config {"bundle":{"createUpdaterArtifacts":true}}'
+          - platform: windows-latest
+            rust-targets: ""
+            args: '--config {"bundle":{"createUpdaterArtifacts":true}}'
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # `prepare`가 방금 만든 태그를 본다. 기본 체크아웃(워크플로를 띄운 커밋)은 버전
+          # 올리기 **이전** 상태라 옛 버전으로 빌드된다.
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          # 기본값은 false라 빌드가 깨지면 캐시를 저장하지 않는다 — Windows 실패를
+          # 고치는 동안 매 실행이 의존성 ~300개(C 암호 라이브러리 둘 포함)를 처음부터
+          # 다시 컴파일하게 된다. 캐시되는 건 의존성 산출물이라 실패해도 유효하다.
+          cache-on-failure: true
+
+      - run: npm ci
+
+      # 릴리스는 되돌리기 어렵다(설치본이 곧바로 사용자에게 나간다). 프론트 게이트를 한 번 더
+      # 돌린다 — OS와 무관한 검사라 한쪽에서만 돌리면 충분하다(e2e는 CI가 main에서 담당).
+      - if: matrix.platform == 'macos-14'
+        run: npm run check
+
+      # 가드: 공개키가 비었거나 형식이 아니면, 업데이트를 영영 검증하지 못하는 앱이 나간다.
+      # 빌드 전에 끊는다(릴리스가 나간 뒤에는 고칠 수 없다 — 사용자가 재설치해야 한다).
+      - name: updater 공개키 확인
+        shell: bash
+        run: |
+          if ! grep -q '"pubkey": *"[A-Za-z0-9+/=]\{40,\}"' src-tauri/tauri.conf.json; then
+            echo "::error::src-tauri/tauri.conf.json의 plugins.updater.pubkey가 비어 있거나 형식이 아닙니다."
+            exit 1
+          fi
+
+      # 서명 암호 변수를 **존재가 보장된 상태**로 심는다.
+      #
+      # 개인키는 암호 없이 만들었지만, 변수 자체가 없으면 CLI가 비대화형 환경에서 암호를
+      # 물어보려다 실패한다(`incorrect updater private key password: Device not configured`).
+      # 즉 "값이 빈 것"과 "변수가 없는 것"은 다른 상태다.
+      #
+      # 그런데 GitHub 웹 UI는 **값이 빈 시크릿을 저장하지 못한다** — 그래서 이 시크릿을 아예
+      # 등록하지 않는 것이 정상 경로다. 없는 시크릿 참조는 빈 문자열로 평가되고 일반 잡에서는
+      # 빈 값도 변수로 설정되지만, 그건 런너 구현 세부다(컨테이너 잡에서는 설정되지 않는
+      # 알려진 버그가 있다 — actions/runner#3043). 릴리스가 거기에 걸리지 않도록 여기서
+      # 명시적으로 심는다. 실패해도 "서명이 없어 latest.json 업로드가 조용히 스킵"되는
+      # 형태라 증상만 보고는 원인을 찾기 어렵다.
+      #
+      # 나중에 암호를 건 키로 바꿔도 그대로 동작한다(시크릿 값이 그대로 실린다). 구분자
+      # 형식을 쓰는 것은 값에 특수문자나 줄바꿈이 있어도 GITHUB_ENV 파싱이 깨지지 않게 하기
+      # 위함이다.
+      - name: 서명 암호 환경변수 보장
+        shell: bash
+        env:
+          PW: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          {
+            echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD<<__TAURI_PW_EOF__"
+            printf '%s\n' "${PW-}"
+            echo "__TAURI_PW_EOF__"
+          } >> "$GITHUB_ENV"
+
+      - name: 빌드 + 릴리스 업로드
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          # TAURI_SIGNING_PRIVATE_KEY_PASSWORD는 여기 두지 않는다 — 스텝 수준 env가 위
+          # 스텝이 GITHUB_ENV로 심은 값을 덮어써, 보장하려던 것을 그대로 되돌린다.
+        with:
+          tagName: ${{ needs.prepare.outputs.tag }}
+          releaseName: Note Rang __VERSION__
+          # 초안으로 올린다 — 사람이 확인하고 게시해야 `releases/latest`가 움직인다(= 업데이트가
+          # 나간다). 잘못 나간 릴리스를 되돌리는 비용이 한 번 더 클릭하는 비용보다 크다.
+          # 게시 시점에 Homebrew tap 갱신이 걸려 있다(.github/workflows/homebrew.yml).
+          releaseDraft: true
+          prerelease: false
+          # Windows는 MSI와 NSIS가 둘 다 나온다. 업데이트에는 NSIS를 쓴다 — MSI 갱신은 권한
+          # 상승을 요구해 `installMode: passive`(tauri.conf.json)와 맞지 않는다. 이 값이 true여야
+          # NSIS가 무접미 키(`windows-x86_64`)를 차지한다(false면 MSI가 가져간다). macOS
+          # 잡에서는 무시된다.
+          updaterJsonPreferNsis: true
+          # `createUpdaterArtifacts`를 args로만 켜는 이유: 설정에 박아 두면 번들러가 개인키를
+          # 요구해 키 없는 로컬 `npm run tauri build`가 끊긴다. 서명 키가 있는 CI에서만 켠다.
+          args: ${{ matrix.args }}
+
+  # latest.json의 다운로드 주소를 공개 릴리스 URL로 바꾼다.
+  #
+  # **왜 필요한가.** tauri-action은 `latest.json`의 `url`을 **조건 없이** GitHub API 자산 주소
+  # (`https://api.github.com/repos/<소유자>/<리포>/releases/assets/<id>`)로 쓴다
+  # (tauri-action `src/upload-version-json.ts`). 초안 릴리스의 자산도 집을 수 있어야 하기
+  # 때문인데, 이 주소는 **인증 없는 API 호출**이라 출발지 IP당 시간당 60회 제한을 받는다.
+  # 사내망처럼 NAT 뒤에서 IP를 공유하는 곳은 그 쿼터가 이미 소진돼 있기 십상이고, 그러면
+  # 사용자는 「설치」를 누른 순간 403을 본다. 버전 **확인**은 `github.com`으로 나가 멀쩡히
+  # 통과한 뒤라 증상이 더 헷갈린다("업데이트가 있다고는 하는데 설치만 실패"). `api.github.com`
+  # 만 막는 프록시, User-Agent를 지우는 프록시(이 호스트는 UA가 없으면 무조건 403)도 같은
+  # 자리에서 터진다.
+  #
+  # `releases/download/<태그>/<파일명>`은 익명 CDN 경로라 쿼터도 UA 요구도 없다. 태그와
+  # 파일명만으로 결정되므로 초안 시점에 미리 적어 둘 수 있다 — 게시 전에는 404지만, 이 파일을
+  # 클라이언트가 읽는 시점은 언제나 게시 후다.
+  #
+  # 매트릭스가 **끝난 뒤 한 번만** 돈다. 빌드 잡 안에서 하면 두 OS가 각자 덮어써(tauri-action이
+  # 기존 latest.json을 승계하는 구조와 겹쳐) 결과가 실행 순서에 의존하게 된다.
+  updater-urls:
+    needs: [prepare, release]
+    # 한쪽 OS가 깨져도(`fail-fast: false`) 성공한 쪽 latest.json은 고쳐 둔다. 취소된 실행에서는
+    # 돌지 않는다.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: latest.json 다운로드 주소 치환
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          # 초안 릴리스는 `GET /releases/tags/{tag}`로 조회되지 않는다(게시된 것만 나온다).
+          # 목록에서 tag_name으로 찾는다 — tauri-action이 기존 latest.json을 찾을 때와 같은 방식.
+          RELEASE_ID=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            --jq ".[] | select(.tag_name == \"$TAG\") | .id")
+          if [ -z "$RELEASE_ID" ]; then
+            echo "::error::$TAG 릴리스를 찾지 못했습니다."
+            exit 1
+          fi
+
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?per_page=100" > assets.json
+
+          ASSET_ID=$(jq -r '.[] | select(.name == "latest.json") | .id // empty' assets.json)
+          if [ -z "$ASSET_ID" ]; then
+            # 서명 키가 없거나 양쪽 빌드가 다 깨지면 latest.json 자체가 올라가지 않는다. 그건
+            # 이 잡이 고칠 수 있는 문제가 아니고, 여기서 실패하면 진짜 원인이 가려진다.
+            echo "::warning::latest.json이 릴리스에 없습니다 — 치환할 것이 없어 건너뜁니다."
+            exit 0
+          fi
+
+          gh api -H "Accept: application/octet-stream" \
+            "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET_ID" > latest.json
+
+          cat > rewrite.mjs <<'JS'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const repo = process.env.GITHUB_REPOSITORY;
+          const tag = process.env.TAG;
+          const names = new Map(
+            JSON.parse(readFileSync('assets.json', 'utf8')).map((a) => [String(a.id), a.name]),
+          );
+          const doc = JSON.parse(readFileSync('latest.json', 'utf8'));
+          const platforms = Object.entries(doc.platforms ?? {});
+
+          if (platforms.length === 0) throw new Error('latest.json에 platforms가 비어 있습니다.');
+
+          const API = /^https:\/\/api\.github\.com\/repos\/[^/]+\/[^/]+\/releases\/assets\/(\d+)$/;
+          let rewritten = 0;
+          for (const [target, entry] of platforms) {
+            const id = API.exec(entry.url ?? '')?.[1];
+            if (!id) continue;
+            const name = names.get(id);
+            // 자산 id가 이 릴리스에 없다 = latest.json이 다른 릴리스의 것을 승계했다는 뜻이다.
+            // 추측해서 URL을 만들면 서명과 짝이 안 맞는 파일을 가리킬 수 있으므로 끊는다.
+            if (!name) throw new Error(`${target}: 자산 ${id}을(를) ${tag} 릴리스에서 찾지 못했습니다.`);
+            entry.url = `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${encodeURIComponent(name)}`;
+            rewritten += 1;
+          }
+
+          // 가드: 하나라도 남으면 그 플랫폼만 사내망에서 403이 난다(전체가 아니라 일부만 깨지는
+          // 형태라 더 늦게 발견된다).
+          const left = platforms.filter(([, e]) => String(e.url).includes('api.github.com'));
+          if (left.length > 0) {
+            throw new Error(`치환되지 않은 API 주소: ${left.map(([t]) => t).join(', ')}`);
+          }
+
+          writeFileSync('latest.json', `${JSON.stringify(doc, null, 2)}\n`);
+          console.log(`플랫폼 ${platforms.length}개 중 ${rewritten}개 치환`);
+          JS
+
+          node rewrite.mjs
+
+          # 같은 이름의 자산은 덮어쓸 수 없어 지우고 다시 올린다. 그 사이 latest.json이 잠깐
+          # 비지만, 초안 릴리스라 아직 아무도 읽지 않는다(공개는 사람이 게시할 때다).
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET_ID"
+          gh api --method POST \
+            -H "Content-Type: application/json" \
+            "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=latest.json" \
+            --input latest.json > /dev/null
+
+          echo "치환된 latest.json:"
+          cat latest.json

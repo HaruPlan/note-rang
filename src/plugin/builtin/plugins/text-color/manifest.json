@@ -1,0 +1,19 @@
+{
+  "id": "text-color",
+  "name": "%text-color.name%",
+  "version": "1.1.0",
+  "summary": "%text-color.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor"],
+  "nls": {
+    "default": {
+      "text-color.name": "글자 색",
+      "text-color.summary": "{{텍스트|#fff}}로 글자 색을 바꿔요(형광펜처럼)"
+    },
+    "en": {
+      "text-color.name": "Text Color",
+      "text-color.summary": "Colors {{text|#fff}} like a highlighter"
+    }
+  }
+}

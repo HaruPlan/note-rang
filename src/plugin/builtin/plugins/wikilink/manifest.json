@@ -1,0 +1,19 @@
+{
+  "id": "wikilink",
+  "name": "%wikilink.name%",
+  "version": "1.0.0",
+  "summary": "%wikilink.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor", "notes:read", "windows"],
+  "nls": {
+    "default": {
+      "wikilink.name": "위키링크",
+      "wikilink.summary": "[[제목]]을 눌러 넘나드는 노트 링크"
+    },
+    "en": {
+      "wikilink.name": "Wikilink",
+      "wikilink.summary": "Click [[Title]] to jump between notes"
+    }
+  }
+}

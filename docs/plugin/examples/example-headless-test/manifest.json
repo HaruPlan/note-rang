@@ -1,0 +1,29 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-headless-test",
+  "name": "예제: 헤드리스 테스트 대상",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "버튼·설정·이벤트 구독을 갖춘 작은 플러그인 — 헤드리스 하니스로 테스트하는 예제",
+  "purpose": "test-host 하니스로 플러그인을 앱 없이 실행·단언하는 법을 보여 준다",
+  "llmContext": "툴바 버튼 1개(`stamp-path`)와 이벤트 구독 1개(`note:saved`)를 등록한다. 버튼을 누르면 설정 `stamp`를 앞에 붙여 현재 노트 경로를 `clipboard.write`하고 `ui.toast`로 알린다. `note:saved`가 나면 `ui.toast`로 알린다. 창-스코프 호출은 전부 바인딩된 memo(첫 인자)로 한다. 이 플러그인의 목적은 README의 '헤드리스 하니스로 테스트하기' 절에서 test-host 사용법을 보이는 것이다.",
+  "kind": "action",
+  "permissions": ["ui", "settings", "notes:read", "clipboard"],
+  "permissionReasons": {
+    "ui": "툴바 버튼과 결과 토스트를 띄웁니다",
+    "settings": "복사할 때 앞에 붙일 도장 문구를 설정에서 읽습니다",
+    "notes:read": "지금 열린 메모의 경로를 읽고, 저장 이벤트를 구독합니다",
+    "clipboard": "읽은 경로를 클립보드에 씁니다"
+  },
+  "settings": [
+    {
+      "key": "stamp",
+      "label": "경로 앞에 붙일 도장",
+      "type": "text",
+      "default": "✓ ",
+      "placeholder": "예: ✓ ",
+      "description": "복사할 때 경로 앞에 붙는 문구입니다.",
+      "options": []
+    }
+  ]
+}

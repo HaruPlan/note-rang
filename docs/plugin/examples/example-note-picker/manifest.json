@@ -1,0 +1,17 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-note-picker",
+  "name": "예제: 노트 골라 삽입",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "전체 노트에서 하나 골라 그 본문을 커서에 삽입",
+  "purpose": "노트 컬렉션 전체를 읽는 새 권한(notes:all-read)의 정본 사용례",
+  "llmContext": "툴바 버튼 1개(`pick-note`)를 등록한다. 클릭하면 `notes.list`로 전체 노트 메타를 받아 숨긴(hidden) 노트를 걸러 `ui.pickList`로 고르게 하고, 고른 id를 `notes.read`에 넘겨 본문을 읽어 `editor.insertText`로 커서에 삽입한다. 취소(null)는 조용히 끝낸다. 창-스코프 호출은 전부 onClick의 첫 인자로 오는 바인딩된 memo로 한다. notes.list/notes.read는 호스트 스코프라 창 컨텍스트가 필요 없다.",
+  "kind": "action",
+  "permissions": ["ui", "notes:all-read", "notes:write"],
+  "permissionReasons": {
+    "ui": "노트를 고르는 팝업과 결과 토스트를 띄웁니다",
+    "notes:all-read": "전체 노트의 제목 목록과 고른 노트의 본문을 읽습니다",
+    "notes:write": "고른 노트의 본문을 지금 메모의 커서 위치에 삽입합니다"
+  }
+}

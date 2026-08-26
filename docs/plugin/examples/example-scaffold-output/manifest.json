@@ -1,0 +1,41 @@
+{
+  "$schema": "./plugin-manifest.schema.json",
+  "id": "example-scaffold-output",
+  "name": "example-scaffold-output",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "kind": "action",
+  "summary": "설정 두 개(문구·말투) + 버튼 하나 — memo-plugin types의 정본 사용례",
+  "purpose": "설정에서 인사말과 말투를 읽어 버튼을 누르면 토스트로 보여준다",
+  "permissions": ["ui", "settings"],
+  "permissionReasons": {
+    "ui": "결과를 토스트로 보여줍니다",
+    "settings": "인사말·말투 설정을 읽습니다"
+  },
+  "settings": [
+    {
+      "key": "greeting",
+      "label": "인사말",
+      "type": "text",
+      "default": "안녕하세요",
+      "placeholder": "예: 안녕하세요",
+      "description": "버튼을 누르면 이 문구를 보여줍니다."
+    },
+    {
+      "key": "style",
+      "label": "말투",
+      "type": "select",
+      "default": "formal",
+      "options": [
+        {
+          "value": "formal",
+          "label": "높임"
+        },
+        {
+          "value": "casual",
+          "label": "반말"
+        }
+      ]
+    }
+  ]
+}

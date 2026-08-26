@@ -1,0 +1,19 @@
+{
+  "id": "word-count",
+  "name": "%word-count.name%",
+  "version": "1.1.0",
+  "summary": "%word-count.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["ui", "clipboard", "notes:read", "settings"],
+  "nls": {
+    "default": {
+      "word-count.name": "단어 수",
+      "word-count.summary": "단어·글자 수를 툴바에 실시간으로 표시"
+    },
+    "en": {
+      "word-count.name": "Word Count",
+      "word-count.summary": "Shows live word and character counts in the toolbar"
+    }
+  }
+}

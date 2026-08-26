@@ -1,0 +1,19 @@
+{
+  "id": "background",
+  "name": "%background.name%",
+  "version": "1.0.0",
+  "summary": "%background.summary%",
+  "kind": "capability",
+  "entry": "main.js",
+  "permissions": ["background"],
+  "nls": {
+    "default": {
+      "background.name": "배경색",
+      "background.summary": "노트 배경색을 고르는 툴바 🎨"
+    },
+    "en": {
+      "background.name": "Background Color",
+      "background.summary": "Toolbar for picking the note's background color 🎨"
+    }
+  }
+}

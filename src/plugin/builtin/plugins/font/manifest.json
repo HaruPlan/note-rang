@@ -1,0 +1,19 @@
+{
+  "id": "font",
+  "name": "%font.name%",
+  "version": "1.0.0",
+  "summary": "%font.summary%",
+  "kind": "capability",
+  "entry": "main.js",
+  "permissions": ["font"],
+  "nls": {
+    "default": {
+      "font.name": "폰트",
+      "font.summary": "테마 폰트 피커에 글꼴 공급"
+    },
+    "en": {
+      "font.name": "Font",
+      "font.summary": "Supplies font families to the theme's font picker"
+    }
+  }
+}

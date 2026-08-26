@@ -1,0 +1,19 @@
+{
+  "id": "font-scale",
+  "name": "%font-scale.name%",
+  "version": "1.0.0",
+  "summary": "%font-scale.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["ui", "editor"],
+  "nls": {
+    "default": {
+      "font-scale.name": "글자 크기",
+      "font-scale.summary": "메모별 글자 크기 A−/A+ 버튼"
+    },
+    "en": {
+      "font-scale.name": "Font Size",
+      "font-scale.summary": "Per-note font size A−/A+ buttons"
+    }
+  }
+}

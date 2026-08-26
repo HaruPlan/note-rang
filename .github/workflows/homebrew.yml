@@ -1,0 +1,158 @@
+# Homebrew tap 갱신 — 릴리스를 **게시**하는 순간 HaruPlan/homebrew-tap의 `Casks/note-rang.rb`를
+# 새 version·sha256으로 밀어 넣는다.
+#
+# 왜 릴리스 빌드 워크플로가 아니라 여기인가: cask의 `url`은
+# `releases/download/v<ver>/...`를 가리키는데, 릴리스가 **초안인 동안 그 URL은 404**다.
+# 빌드 직후에 tap을 갱신하면 아직 받을 수 없는 파일을 가리키는 cask가 나가고, 초안을 버리면
+# tap만 앞서간 채 남는다. 사람이 초안을 게시하는 시점 = 다운로드가 실제로 가능해지는 시점이라
+# 여기에 건다.
+#
+# 왜 별도 토큰이 필요한가: `GITHUB_TOKEN`은 **이 리포에만** 유효하다. 다른 리포(tap)로 푸시하려면
+# 그 리포에 쓰기 권한이 있는 자격증명이 따로 있어야 한다 — `TAP_TOKEN` 시크릿
+# (fine-grained PAT, HaruPlan/homebrew-tap의 Contents: Read and write).
+# 자세한 절차는 docs/contributing/release.md 참고.
+
+name: Homebrew tap
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "갱신할 릴리스 태그 (예: v0.2.0)"
+        required: true
+        type: string
+
+concurrency:
+  # tap은 단일 파일을 고쳐 푸시한다 — 두 실행이 겹치면 non-fast-forward로 깨진다.
+  group: homebrew-tap
+  cancel-in-progress: false
+
+jobs:
+  update-cask:
+    # 프리릴리스는 "받아 보라"는 뜻이지 "모두에게 배포한다"는 뜻이 아니다. brew 사용자에게
+    # 밀지 않는다.
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: 태그·버전 확정
+        id: v
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.tag || github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::태그에서 semver를 못 읽었습니다: '$TAG'"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: 앱 리포 체크아웃(cask 템플릿)
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.v.outputs.tag }}
+          path: app
+
+      - name: DMG 내려받아 sha256 계산
+        id: dmg
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.v.outputs.tag }}"
+          VERSION="${{ steps.v.outputs.version }}"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*universal.dmg' --dir dl
+          COUNT=$(find dl -name '*.dmg' | wc -l | tr -d ' ')
+          if [ "$COUNT" != "1" ]; then
+            echo "::error::유니버설 DMG가 정확히 하나여야 하는데 ${COUNT}개입니다."
+            find dl -name '*.dmg' -printf '  %f\n' || true
+            exit 1
+          fi
+          DMG=$(find dl -name '*.dmg')
+          BASE=$(basename "$DMG")
+          # 가드: cask의 url이 조립하는 이름과 실제 자산 이름이 같아야 한다. 번들러가
+          # productName을 바꾸거나 아키텍처 접미사가 달라지면 여기서 걸린다 — 어긋난 채
+          # 나가면 `brew install`이 404로 죽는다(설치가 통째로 막힌다).
+          EXPECTED="Note.Rang_${VERSION}_universal.dmg"
+          if [ "$BASE" != "$EXPECTED" ]; then
+            echo "::error::DMG 이름이 cask가 기대하는 것과 다릅니다. 실제='$BASE' 기대='$EXPECTED'"
+            exit 1
+          fi
+          echo "sha256=$(sha256sum "$DMG" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "basename=$BASE" >> "$GITHUB_OUTPUT"
+
+      # `actions/checkout`을 쓰지 않는다 — **tap 리포가 비어 있으면(커밋 0개) 체크아웃할 ref가
+      # 없어 실패한다.** 첫 릴리스가 정확히 그 상황이다. `git clone`은 빈 리포도 경고만 내고
+      # 성공하며(원격의 기본 브랜치 이름으로 unborn HEAD가 잡힌다), 이후 커밋·푸시가 그대로
+      # 통한다. 빈 리포와 내용이 있는 리포를 분기 없이 같은 코드로 다룰 수 있다.
+      - name: tap 리포 클론
+        shell: bash
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TAP_TOKEN:-}" ]; then
+            echo "::error::TAP_TOKEN 시크릿이 없습니다. tap 리포에 푸시할 수 없습니다."
+            echo "::error::HaruPlan/homebrew-tap의 Contents: Read and write 권한을 가진 fine-grained PAT을 등록하세요."
+            exit 1
+          fi
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/HaruPlan/homebrew-tap.git" tap
+
+      - name: cask 갱신
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.v.outputs.version }}"
+          SHA="${{ steps.dmg.outputs.sha256 }}"
+          mkdir -p tap/Casks
+          # 정본은 앱 리포의 템플릿이다 — url·zap·auto_updates 같은 구조 변경도 릴리스와 함께
+          # 자동으로 따라온다(tap에서 손으로 고칠 필요가 없다).
+          cp app/packaging/homebrew/note-rang.rb tap/Casks/note-rang.rb
+          perl -pi -e 's/^  version "[^"]*"$/  version "'"$VERSION"'"/' tap/Casks/note-rang.rb
+          perl -pi -e 's/^  sha256 "[^"]*"$/  sha256 "'"$SHA"'"/' tap/Casks/note-rang.rb
+          # 가드: 치환이 실제로 먹었는지 확인한다(템플릿 형식이 바뀌면 perl은 조용히 아무것도
+          # 안 하고, 자리표시자 0…0이 그대로 tap에 나간다 = 모든 설치가 체크섬 불일치로 실패).
+          grep -q "^  version \"$VERSION\"$" tap/Casks/note-rang.rb
+          grep -q "^  sha256 \"$SHA\"$" tap/Casks/note-rang.rb
+          echo "--- 갱신된 cask ---"
+          grep -E '^  (version|sha256|url) ' tap/Casks/note-rang.rb
+
+      - name: tap 푸시
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # **먼저 stage하고 나서 비교한다.** `git diff --quiet`는 추적되지 않은 파일을 보지
+          # 못해서, cask가 tap에 처음 들어가는 첫 릴리스에서 "변경 없음"으로 오판하고 푸시를
+          # 건너뛴다(그리고 성공한 것처럼 끝난다).
+          git add Casks/note-rang.rb
+          if git diff --cached --quiet; then
+            echo "cask에 변경 없음 — 푸시를 건너뜁니다."
+            exit 0
+          fi
+          git commit -m "note-rang ${{ steps.v.outputs.version }}"
+          # 빈 리포에서 시작한 경우 아직 원격에 브랜치가 없다 — `-u ... HEAD`로 만든다.
+          git push -u origin HEAD
+
+      - name: 요약
+        shell: bash
+        run: |
+          {
+            echo "## Homebrew tap 갱신"
+            echo ""
+            echo "| 항목 | 값 |"
+            echo "| --- | --- |"
+            echo "| version | \`${{ steps.v.outputs.version }}\` |"
+            echo "| sha256 | \`${{ steps.dmg.outputs.sha256 }}\` |"
+            echo "| DMG | \`${{ steps.dmg.outputs.basename }}\` |"
+            echo ""
+            echo '```bash'
+            echo "brew install --cask haruplan/tap/note-rang"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
