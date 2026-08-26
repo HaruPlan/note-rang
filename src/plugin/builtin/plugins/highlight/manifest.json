@@ -1,0 +1,19 @@
+{
+  "id": "highlight",
+  "name": "%highlight.name%",
+  "version": "1.0.0",
+  "summary": "%highlight.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor"],
+  "nls": {
+    "default": {
+      "highlight.name": "형광펜",
+      "highlight.summary": "==텍스트==를 형광펜으로 강조"
+    },
+    "en": {
+      "highlight.name": "Highlight",
+      "highlight.summary": "Highlights ==text== like a marker pen"
+    }
+  }
+}

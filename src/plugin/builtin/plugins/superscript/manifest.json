@@ -1,0 +1,19 @@
+{
+  "id": "superscript",
+  "name": "%superscript.name%",
+  "version": "1.0.0",
+  "summary": "%superscript.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor"],
+  "nls": {
+    "default": {
+      "superscript.name": "위첨자",
+      "superscript.summary": "^텍스트^를 위첨자로"
+    },
+    "en": {
+      "superscript.name": "Superscript",
+      "superscript.summary": "Renders ^text^ as superscript"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Note Rang",
+  "mainBinaryName": "note-rang",
+  "version": "0.0.3",
+  "identifier": "com.haruplan.note-rang",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true,
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' blob: 'sha256-LG7npS7t+5ihhHjKkO++L1+HpYqasfM20oWuxyfEOpk='; style-src 'self' 'unsafe-inline'; img-src 'self' asset: http://asset.localhost data: blob:; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$HOME/**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlCM0M3RDBGQjEyNUEzOUQKUldTZG95V3hEMzA4bTVwQi8wWTd2WER5NENDcmNRR1VZZzVWRXI3eXB6Q2VteEw5Q0pLRUJWdzAK",
+      "endpoints": [
+        "https://github.com/HaruPlan/note-rang/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

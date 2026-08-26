@@ -1,0 +1,19 @@
+{
+  "id": "always-on-top",
+  "name": "%always-on-top.name%",
+  "version": "1.0.0",
+  "summary": "%always-on-top.summary%",
+  "kind": "capability",
+  "entry": "main.js",
+  "permissions": ["window-control"],
+  "nls": {
+    "default": {
+      "always-on-top.name": "항상 위",
+      "always-on-top.summary": "노트를 항상 다른 창 위에 고정"
+    },
+    "en": {
+      "always-on-top.name": "Always on Top",
+      "always-on-top.summary": "Keep the note pinned above other windows"
+    }
+  }
+}

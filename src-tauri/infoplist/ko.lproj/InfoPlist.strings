@@ -1,0 +1,5 @@
+/* 이슈 #29 — macOS 앱 표시 이름(Finder·Dock·메뉴바)을 로케일별로 다르게 보여준다.
+   CFBundleDisplayName은 기본 Info.plist에 이미 productName("Note Rang")으로 채워져 있고
+   (tauri-bundler가 자동 생성), 이 파일이 있으면 시스템 로케일이 한국어일 때만 이 값으로
+   덮어써진다(Apple 표준 InfoPlist.strings 로케일라이즈 메커니즘). */
+"CFBundleDisplayName" = "노트랑";

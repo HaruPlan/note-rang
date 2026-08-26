@@ -1,0 +1,111 @@
+[package]
+name = "note-rang"
+version = "0.0.3"
+description = "note-rang — floating Markdown sticky notes"
+authors = ["HaruPlan"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "memo_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [
+    "tray-icon",
+    "macos-private-api",
+    "protocol-asset",
+] }
+# 싱글턴 강제(이슈 #27) — 두 번째 EXE 실행을 새 프로세스로 띄우지 않고 기존 인스턴스로
+# 콜백만 넘긴다. 공식 권장대로 Builder에 **가장 먼저** 등록한다(lib.rs 참고).
+tauri-plugin-single-instance = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-dialog = "2"
+# 네이티브 클립보드 — 브라우저 Clipboard API(`navigator.clipboard`)만으로는 Windows(WebView2)에서
+# 복사가 조용히 거절된다(문서 포커스·권한 조건). 웹뷰가 아니라 OS에 직접 쓰는 경로를 둔다.
+tauri-plugin-clipboard-manager = "2"
+# 자동 업데이트(updater.rs) — Apple 자격 증명과 무관한 minisign 서명 채널.
+# 기본 기능을 끄고 둘만 되켠다(기본값과 결과는 같지만 무엇을 왜 쓰는지 명시하기 위함).
+# - `zip`: 아카이브로 포장된 업데이트 산출물을 푸는 경로다. **지금 설정에서는 쓰이지 않는다** —
+#   릴리스 워크플로가 `createUpdaterArtifacts: true`(v2 형식)로 빌드해 Windows 산출물이 raw
+#   `.exe`이고, macOS의 `.app.tar.gz`는 tar.gz 경로라 zip을 타지 않는다. v1 형식
+#   (`"v1Compatible"` → `.nsis.zip`)으로 되돌리거나 AppImage를 추가하면 그때 필요해지므로,
+#   되돌릴 여지를 남겨 켜 둔다(어차피 이 크레이트의 기본 기능이다).
+# - `native-tls`: 아래 reqwest와 **같은 선택**이어야 한다. 이 크레이트의 `rustls-tls`는
+#   rustls의 provider로 `ring`을 켜는데, reqwest가 고른 provider(aws-lc-rs)와 달라서 같은
+#   일을 하는 C 암호 라이브러리가 한 바이너리에 두 벌 링크됐다.
+tauri-plugin-updater = { version = "2", default-features = false, features = [
+    "native-tls",
+    "zip",
+] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+notify = "6"
+# 플러그인 zip 설치(plugin_install.rs). `deflate-flate2`만으로는 **압축 백엔드가 정해지지
+# 않는다** — 그 기능은 flate2를 의존성으로 추가하기만 하고 구현을 고르지 않아서, 백엔드를
+# 켜 주는 다른 크레이트가 그래프에 없으면 flate2가 `compile_error!`로 끊긴다(macOS에서는
+# png가 우연히 켜 줘서 드러나지 않았고 Windows 빌드에서 터졌다). 그래서 명시적으로 고른다.
+# `-zlib-rs`는 순수 Rust 구현이라 C 툴체인을 새로 끌어오지 않는다(`-zlib`/`-zlib-ng`는 C다).
+zip = { version = "8.6.0", default-features = false, features = [
+    "deflate-flate2-zlib-rs",
+] }
+# P41 network.fetch — 호스트 중계 HTTP(블로킹). 이미 잠긴 0.13.x를 재사용한다(새 버전 도입
+# 없음). `blocking`으로 tauri 스레드풀(`#[tauri::command(async)]`)에서 자체 런타임을 돌리고,
+# TLS는 **`native-tls`**로 OS 것을 쓴다(macOS = Security.framework, Windows = schannel).
+# `default-tls`가 아니라 이름을 박는 이유: 0.13에서 `default-tls`는 더 이상 시스템 TLS가
+# 아니라 rustls + aws-lc-rs를 뜻한다(0.12까지는 native-tls였다). 그대로 두면 원래 의도와
+# 반대로 C 암호 라이브러리(cmake·NASM 필요)를 새로 끌어온다.
+# 기본 기능은 끄고 필요한 둘만 켠다(gzip·json·cookie 등 불필요 표면 배제 — cookie 미포함이
+# 곧 자격증명 미전달의 한 겹이다).
+reqwest = { version = "0.13", default-features = false, features = [
+    "blocking",
+    "native-tls",
+] }
+# URL 파싱·호스트 판별(`url::Host`로 IPv4/IPv6 리터럴과 도메인을 분기 — net.rs SSRF 검사).
+# reqwest가 쓰는 것과 같은 잠긴 버전을 재사용한다(Url은 reqwest가 재수출하지만 Host 열거는 안 함).
+url = "2"
+# 시스템 로케일 조회(i18n.rs) — SharedSettings.language가 아직 없을 때(최초 실행 등) ko/en 중
+# 무엇을 기본으로 쓸지 이 머신의 OS 로케일로 정한다. 가볍고(의존성 트리 추가 부담 거의 없음)
+# Windows·macOS 둘 다 표준 플랫폼 API로 조회해 별도 구현이 필요 없다.
+sys-locale = "0.3"
+
+[dev-dependencies]
+tempfile = "3"
+# MockRuntime(tauri::test) — 창 생성/재사용 가드를 실제 GUI 없이 테스트한다.
+tauri = { version = "2", features = ["test"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+
+# Windows 전용 네이티브 창 제어(windows.rs의 `apply_borderless_corners`) — DWM에게 노트 창의
+# 모서리 처리를 맡기지 않겠다고 선언한다(DWMWA_WINDOW_CORNER_PREFERENCE). tao/tauri가 노출하는
+# 옵션에는 corner preference가 없어 이 한 호출만 직접 한다.
+# 버전을 "0.61"로 박는 이유: `WebviewWindow::hwnd()`가 돌려주는 `HWND`가 **tauri가 쓰는 바로 그
+# windows 크레이트의 타입**이어야 인자로 넘길 수 있다(major가 다르면 이름만 같은 별개 타입이
+# 되어 컴파일이 깨진다). tauri 2.11이 잠근 0.61.x를 그대로 재사용하므로 의존성 트리에 새
+# 크레이트가 추가되지 않는다. 필요한 기능(feature)만 켠다.
+# `Win32_UI_Shell*` · `Win32_System_Com*`는 작업 표시줄 점프 리스트(jumplist.rs)가 쓴다 —
+# `ICustomDestinationList`로 Tasks 항목을 커밋하고, 항목 제목을 `IPropertyStore`(PKEY_Title)로
+# 박는다. `Win32_System_Variant`는 그 제목이 담기는 `PROPVARIANT` 타입 자체를 켜는 기능이다
+# (해당 struct이 그 feature로 가려져 있다). 새 크레이트는 추가되지 않고 이미 있는 windows
+# 크레이트의 모듈만 더 켜진다.
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Variant",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_Shell_PropertiesSystem",
+] }

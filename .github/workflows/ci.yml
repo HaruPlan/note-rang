@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run knip
+      - run: npm run test
+
+  e2e:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install webkit
+      - run: npm run test:e2e
+
+  # Windows도 함께 돈다 — 릴리스가 두 OS로 나가므로 `#[cfg(not(target_os = "macos"))]`
+  # 분기가 깨진 것을 태그를 밀고 나서 알면 늦다. 서식·미사용 크레이트 검사는 OS와 무관하니
+  # 한쪽에서만 돌린다.
+  rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-14, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    defaults:
+      run:
+        working-directory: src-tauri
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          # 기본값은 false라 빌드가 깨지면 캐시를 저장하지 않는다 — Windows 실패를
+          # 고치는 동안 매 실행이 의존성 ~300개(C 암호 라이브러리 둘 포함)를 처음부터
+          # 다시 컴파일하게 된다. 캐시되는 건 의존성 산출물이라 실패해도 유효하다.
+          cache-on-failure: true
+      - if: matrix.platform == 'macos-14'
+        run: cargo fmt --check
+      # `--all-targets`라 테스트 코드까지 **컴파일**된다 — Windows 잡의 목적(플랫폼 분기가
+      # 깨졌는지)은 여기서 다 달성된다. 실행은 아래에서 따로 한다.
+      - run: cargo clippy --all-targets -- -D warnings
+      # 테스트 **실행**은 macOS에서만 한다. Windows에서는 테스트 바이너리가 로드조차 되지
+      # 않고 STATUS_ENTRYPOINT_NOT_FOUND(0xc0000139)로 죽는다 — tauri-winres가 Windows 앱
+      # 매니페스트를 `rustc-link-arg-bins`로 붙여서 bin에만 들어가고 테스트 바이너리에는
+      # 빠지기 때문이다. 업스트림 미해결: https://github.com/tauri-apps/tauri/issues/13419
+      #
+      # 되살리려면 build.rs에서 매니페스트를 직접 심어야 하는데(`new_without_app_manifest`
+      # + `/MANIFEST:EMBED`), 그건 **배포되는 앱**의 매니페스트를 건드리는 일이다. CI에서
+      # 테스트를 한 번 더 돌리자고 바꿀 값이 아니다. 테스트 내용은 OS 독립적인 로직
+      # (vault IO·파싱·라우팅)이라 macOS 실행으로 충분하다.
+      - if: matrix.platform == 'macos-14'
+        run: cargo test
+      - name: cargo-machete (unused deps)
+        if: matrix.platform == 'macos-14'
+        run: |
+          cargo install cargo-machete --locked
+          cargo machete

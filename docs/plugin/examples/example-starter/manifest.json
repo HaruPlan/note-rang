@@ -1,0 +1,15 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-starter",
+  "name": "예제: 스타터",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "가장 작은 memo 플러그인 — 인라인 패턴 하나",
+  "purpose": "==강조== 표기를 형광펜 스타일로 그린다",
+  "llmContext": "인라인 패턴 1개(`==...==` → 노란 형광펜)를 등록한다. 설정 없음. 창-스코프 호출 없음. 등록 후 `memo.runtime.ready()`로 마감을 선언하고 실패는 `memo.runtime.log`로 남긴다.",
+  "kind": "action",
+  "permissions": ["editor"],
+  "permissionReasons": {
+    "editor": "본문에 인라인 패턴(형광펜) 하나를 등록합니다"
+  }
+}

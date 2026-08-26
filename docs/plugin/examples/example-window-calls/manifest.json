@@ -1,0 +1,17 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-window-calls",
+  "name": "예제: 창-스코프 호출 잇기",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "입력 → 삽입 → 글자 크기 → 알림을 한 창에서 순차로",
+  "purpose": "머리말을 입력받아 본문에 넣고 글자를 조금 키운다",
+  "llmContext": "툴바 버튼 1개(`insert-heading`)를 등록한다. 클릭하면 `ui.prompt` → `editor.insertText` → `editor.getFontDelta`/`setFontDelta` → `ui.toast`를 **순차로** 호출한다. 네 호출 모두 창-스코프라 onClick이 준 바인딩 memo를 쓰고, 각 반환의 null을 확인한다. 설정 없음.",
+  "kind": "action",
+  "permissions": ["ui", "editor", "notes:write"],
+  "permissionReasons": {
+    "ui": "머리말을 물어보는 입력창과 결과 토스트를 띄웁니다",
+    "editor": "이 메모의 글자 크기를 읽고 조금 키웁니다",
+    "notes:write": "입력받은 머리말을 커서 위치에 넣습니다"
+  }
+}

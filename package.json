@@ -1,0 +1,63 @@
+{
+  "name": "note-rang",
+  "private": true,
+  "version": "0.0.3",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
+    "plugin": "node src/cli/memo-plugin/cli.ts",
+    "check": "npm run format:check && npm run lint && npm run knip && npm run test",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9",
+    "@playwright/test": "^1.61.1",
+    "@tauri-apps/cli": "^2",
+    "eslint": "^9",
+    "eslint-plugin-unused-imports": "^4",
+    "globals": "^15",
+    "husky": "^9",
+    "jsdom": "^29.1.1",
+    "knip": "^5",
+    "lint-staged": "^15",
+    "prettier": "^3",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8",
+    "vite": "^8.1.0",
+    "vitest": "^4.1.9"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,html,yml,yaml}": "prettier --write",
+    "src-tauri/**/*.rs": "rustfmt --edition 2021"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/search": "^6.7.1",
+    "@codemirror/state": "^6.7.0",
+    "@codemirror/view": "^6.43.4",
+    "@lezer/markdown": "^1.6.4",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-clipboard-manager": "^2.3.2"
+  }
+}

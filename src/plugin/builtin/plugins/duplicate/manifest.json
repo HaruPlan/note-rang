@@ -1,0 +1,19 @@
+{
+  "id": "duplicate",
+  "name": "%duplicate.name%",
+  "version": "1.0.0",
+  "summary": "%duplicate.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["ui", "notes:write"],
+  "nls": {
+    "default": {
+      "duplicate.name": "복제",
+      "duplicate.summary": "내용·설정 그대로 새 메모로 복제"
+    },
+    "en": {
+      "duplicate.name": "Duplicate",
+      "duplicate.summary": "Duplicate this note — content and settings included"
+    }
+  }
+}

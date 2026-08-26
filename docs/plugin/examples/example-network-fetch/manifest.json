@@ -1,0 +1,17 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-network-fetch",
+  "name": "예제: 네트워크 요청",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "공개 API에 https 요청을 보내 응답 한 줄을 지금 노트에 삽입한다",
+  "purpose": "memo.network.fetch의 정본 사용례 — 호스트가 대신 받은 응답을 노트에 넣는다",
+  "llmContext": "툴바 버튼 1개(`fetch-zen`)를 등록한다. 클릭하면 `memo.network.fetch`로 https://api.github.com/zen에 GET 요청을 보내고(호스트가 대신 전송 — 샌드박스는 네트워크에 직접 못 닿는다), 2xx면 응답 본문을 `editor.insertText`로 커서에 삽입하고 `ui.toast`로 알린다. 네트워크는 도메인별 권한이라 `network:api.github.com`을 선언해야 그 호스트로 나갈 수 있다(다른 호스트로는 못 나간다). https 전용이고, 호스트가 사설/내부 IP·리다이렉트를 막고 쿠키·인증 헤더를 싣지 않는다. 실패는 err.code로 분기한다(NETWORK_BLOCKED·NETWORK_TIMEOUT 등). 창-스코프 호출(insertText·toast)은 onClick이 준 바인딩 memo로 부른다.",
+  "kind": "action",
+  "permissions": ["ui", "notes:write", "network:api.github.com"],
+  "permissionReasons": {
+    "ui": "툴바 버튼과 결과 토스트를 띄웁니다",
+    "notes:write": "받은 응답을 지금 노트의 커서 위치에 삽입합니다",
+    "network:api.github.com": "api.github.com에 요청을 보내 한 줄 문구를 받아옵니다"
+  }
+}

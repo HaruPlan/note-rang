@@ -1,0 +1,40 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "language-pack-en",
+  "name": "%name%",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "%summary%",
+  "purpose": "Language-pack template (declarative-only) — not the app's shipped English",
+  "llmContext": "Documentation-only language pack TEMPLATE (no test uses it as a fixture). Declares locale \"en\" via contributes.translations with a small illustrative subset of entries (not full ko.json coverage). There is NO runtime registration API for language packs — the manifest declaration is the entire contract, and the core (src-tauri/src/plugin_i18n.rs) scans installed manifests directly, so no plugin sandbox and no host snapshot are involved. English itself ships as a BUNDLED language pack (src/plugin/builtin/language-packs/language-pack-en, loaded by each window's bootstrap via src/i18n/packs.ts, issue #30). Use this folder as the starting point for a full-coverage pack for ANOTHER language: copy it, change `locale`/`label`, and fill `entries` from src/i18n/ko.json's full key set (the bundled English pack is a full-size worked example). main.js is intentionally whitespace-only: the host skips creating a sandbox entirely when the entry code is blank (see docs/plugin/manifest.schema.json's `contributes` description). Collection requires all four of: enabled, current OS supported, kind: \"capability\", and permission `i18n` — a mismatch is skipped silently, so verify with `npm run plugin -- lint <folder>`.",
+  "kind": "capability",
+  "permissions": ["i18n"],
+  "permissionReasons": {
+    "i18n": "Supplies the English translations below as the \"en\" locale"
+  },
+  "nls": {
+    "default": {
+      "name": "Language Pack Template (English sample)",
+      "summary": "Illustrative declarative-only language pack — see src/plugin/builtin/language-packs/language-pack-en for the app's actual bundled English"
+    },
+    "ko": {
+      "name": "언어팩 템플릿(영어 예시)",
+      "summary": "선언형 언어팩 만드는 법을 보여 주는 축약 예제 — 실제 내장 영어는 src/plugin/builtin/language-packs/language-pack-en 참고"
+    }
+  },
+  "contributes": {
+    "translations": [
+      {
+        "locale": "en",
+        "label": "English",
+        "entries": {
+          "note.confirm.cancel": "Cancel",
+          "note.confirm.ok": "OK",
+          "panel.list.empty": "No notes",
+          "panel.item.delete-confirm": "Permanently delete \"{title}\"? This can't be undone.",
+          "settings.vault.choose-message": "Notes will be saved in “{path}” from now on. Move the {notes} note(s) ({files} file(s)) in the current folder there as well?"
+        }
+      }
+    ]
+  }
+}

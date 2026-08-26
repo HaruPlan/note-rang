@@ -1,0 +1,17 @@
+{
+  "id": "sj_d",
+  "name": "SJ_D",
+  "version": "1.0.0",
+  "summary": "%sj_d.summary%",
+  "kind": "capability",
+  "entry": "main.js",
+  "permissions": ["theme"],
+  "nls": {
+    "default": {
+      "sj_d.summary": "차분한 딥블루의 기본 테마"
+    },
+    "en": {
+      "sj_d.summary": "Default theme in a calm deep blue"
+    }
+  }
+}

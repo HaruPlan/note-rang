@@ -1,0 +1,29 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-settings-button",
+  "name": "예제: 설정 화면 액션 버튼",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "설정 폼에서 바로 실행하는 버튼 — 매니페스트 button + commands.register",
+  "purpose": "설정 화면에 「지금 메모 확인」 버튼을 놓고, 누르면 지금 메모의 경로를 알려 준다",
+  "llmContext": "설정 스키마에 `type: \"button\"` 필드를 두고 `command`로 `memo.commands.register`가 등록한 명령 id를 가리킨다. 버튼은 설정 창에서 눌리므로 창 컨텍스트가 없다 — 명령 안의 창-스코프 호출(notes.current·ui.toast)은 「마지막으로 쓴 메모 창」 폴백을 타고, 대상이 없으면 null이 온다. 그 경우 토스트도 못 뜨므로 memo.runtime.log로 진단 채널에 남긴다.",
+  "kind": "action",
+  "permissions": ["commands", "notes:read", "ui"],
+  "permissionReasons": {
+    "commands": "설정 버튼이 실행할 명령 하나를 등록합니다",
+    "notes:read": "지금 열려 있는 메모의 경로를 읽습니다",
+    "ui": "결과를 토스트로 알립니다"
+  },
+  "settingsCategory": "도구",
+  "settingsDescription": "설정 폼 안에서 플러그인 동작을 바로 실행하는 예제입니다.",
+  "settings": [
+    {
+      "key": "whereAmI",
+      "label": "지금 메모 확인",
+      "type": "button",
+      "command": "where-am-i",
+      "confirm": "지금 메모의 경로를 확인할까요?",
+      "description": "설정 창에는 메모가 없어서 「마지막으로 쓴 메모 창」을 기준으로 동작해요. 대상을 못 찾으면 아래 「최근 오류」에 이유가 남습니다."
+    }
+  ]
+}

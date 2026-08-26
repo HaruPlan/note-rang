@@ -1,0 +1,20 @@
+{
+  "id": "transparency",
+  "name": "%transparency.name%",
+  "version": "1.0.0",
+  "summary": "%transparency.summary%",
+  "kind": "capability",
+  "entry": "main.js",
+  "permissions": ["window-control"],
+  "platforms": ["macos"],
+  "nls": {
+    "default": {
+      "transparency.name": "투명도",
+      "transparency.summary": "노트 창 투명도 슬라이더 (macOS)"
+    },
+    "en": {
+      "transparency.name": "Transparency",
+      "transparency.summary": "Note window transparency slider (macOS)"
+    }
+  }
+}

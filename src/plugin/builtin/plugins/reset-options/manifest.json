@@ -1,0 +1,19 @@
+{
+  "id": "reset-options",
+  "name": "%reset-options.name%",
+  "version": "1.0.0",
+  "summary": "%reset-options.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["ui", "notes:write"],
+  "nls": {
+    "default": {
+      "reset-options.name": "옵션 초기화",
+      "reset-options.summary": "이 메모만의 옵션을 전역 기본값으로 되돌리는 버튼"
+    },
+    "en": {
+      "reset-options.name": "Reset Options",
+      "reset-options.summary": "Button that resets this note's options back to the global defaults"
+    }
+  }
+}

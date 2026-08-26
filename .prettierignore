@@ -1,0 +1,15 @@
+dist
+node_modules
+src-tauri/target
+src-tauri/gen
+package-lock.json
+
+# 번들 플러그인 아티팩트 — 내용(코드·문서)을 원문 그대로 보존(외부 플러그인처럼 취급).
+src/plugin/builtin/**/main.js
+src/plugin/builtin/**/README.md
+
+# language-pack-en 예제의 main.js는 공백(개행 하나)뿐이어야 한다(선언형 전용 — 호스트가
+# 샌드박스를 아예 안 띄운다, docs/plugin/examples/language-pack-en/README.md). prettier가
+# 공백뿐인 .js를 포맷하면 0바이트로 접히는데, `""`는 main.ts의 `toInstalledSources`가 "코드를
+# 못 읽음"과 구분 못 해 이 플러그인 자체를 조용히 걸러낸다 — 그래서 원문 그대로 보존한다.
+docs/plugin/examples/language-pack-en/main.js

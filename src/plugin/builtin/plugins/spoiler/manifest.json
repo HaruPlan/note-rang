@@ -1,0 +1,19 @@
+{
+  "id": "spoiler",
+  "name": "%spoiler.name%",
+  "version": "1.0.0",
+  "summary": "%spoiler.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor"],
+  "nls": {
+    "default": {
+      "spoiler.name": "스포일러",
+      "spoiler.summary": "||텍스트||를 가리고 호버로 공개"
+    },
+    "en": {
+      "spoiler.name": "Spoiler",
+      "spoiler.summary": "Blurs ||text|| and reveals it on hover"
+    }
+  }
+}

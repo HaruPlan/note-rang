@@ -1,0 +1,17 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-note-append",
+  "name": "예제: 현재 노트에 추가",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "지금 노트 끝에 타임스탬프 한 줄을 비파괴로 덧붙인다",
+  "purpose": "notes.write(append)의 정본 사용례 — 열려 있는 노트에 안전하게 이어쓴다",
+  "llmContext": "툴바 버튼 1개(`append-stamp`)를 등록한다. 클릭하면 `notes.current`로 이 창의 노트 id를 얻어, `notes.write`에 mode:\"append\"로 타임스탬프 한 줄을 이어붙이고 `ui.toast`로 알린다. 창-스코프 호출(notes.current·toast)은 onClick이 준 바인딩 memo로, 호스트 스코프 호출(notes.write)도 같은 memo로 부른다(호스트 스코프라 창과 무관하지만 통일). notes.write append는 비파괴다(overwrite는 통째로 덮되 Rust가 덮기 전에 스냅샷을 남긴다 — 이 예제는 안전한 append만 쓴다). notes.write가 열린 노트를 바꾸면 호스트가 그 창을 디스크에서 다시 읽어 반영한다.",
+  "kind": "action",
+  "permissions": ["ui", "notes:read", "notes:write"],
+  "permissionReasons": {
+    "ui": "툴바 버튼과 결과 토스트를 띄웁니다",
+    "notes:read": "덧붙일 대상인 지금 노트의 id를 읽습니다",
+    "notes:write": "지금 노트 끝에 타임스탬프 한 줄을 이어붙입니다"
+  }
+}

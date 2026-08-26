@@ -1,0 +1,197 @@
+{
+  "id": "template",
+  "name": "%template.name%",
+  "version": "1.0.0",
+  "summary": "%template.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["ui", "settings", "notes:read", "notes:write"],
+  "settingsCategory": "도구",
+  "settingsDescription": "%template.settingsDescription%",
+  "settings": [
+    {
+      "key": "templates",
+      "label": "%template.settings.templates.label%",
+      "type": "list",
+      "itemLabel": "%template.settings.templates.itemLabel%",
+      "itemNamePlaceholder": "%template.settings.templates.itemNamePlaceholder%",
+      "itemBodyPlaceholder": "%template.settings.templates.itemBodyPlaceholder%",
+      "description": "%template.settings.templates.description%",
+      "default": "=== 📅 주간회의 ===\n# {week}주차 주간회의 ({today} {weekday})\n\n## 지난주 리뷰\n- {cursor}\n\n## 이번주 계획\n-\n\n## 논의사항\n-\n\n=== 📝 데일리 ===\n## {today} 데일리 노트\n- 오늘 할 일:\n\n=== ✅ 회고 ===\n# 회고 ({today})\n- Keep:\n- Problem:\n- Try:",
+      "options": [],
+      "hints": [
+        {
+          "token": "{today}",
+          "label": "%template.settings.templates.hints.today%"
+        },
+        {
+          "token": "{yesterday}",
+          "label": "%template.settings.templates.hints.yesterday%"
+        },
+        {
+          "token": "{tomorrow}",
+          "label": "%template.settings.templates.hints.tomorrow%"
+        },
+        {
+          "token": "{today+7}",
+          "label": "%template.settings.templates.hints.today-offset%"
+        },
+        {
+          "token": "{monday}",
+          "label": "%template.settings.templates.hints.monday%"
+        },
+        {
+          "token": "{sunday}",
+          "label": "%template.settings.templates.hints.sunday%"
+        },
+        {
+          "token": "{time}",
+          "label": "%template.settings.templates.hints.time%"
+        },
+        {
+          "token": "{datetime}",
+          "label": "%template.settings.templates.hints.datetime%"
+        },
+        {
+          "token": "{now}",
+          "label": "%template.settings.templates.hints.now%"
+        },
+        {
+          "token": "{year}",
+          "label": "%template.settings.templates.hints.year%"
+        },
+        {
+          "token": "{month}",
+          "label": "%template.settings.templates.hints.month%"
+        },
+        {
+          "token": "{day}",
+          "label": "%template.settings.templates.hints.day%"
+        },
+        {
+          "token": "{weekday}",
+          "label": "%template.settings.templates.hints.weekday%"
+        },
+        {
+          "token": "{week}",
+          "label": "%template.settings.templates.hints.week%"
+        },
+        {
+          "token": "{title}",
+          "label": "%template.settings.templates.hints.title%"
+        },
+        {
+          "token": "{path}",
+          "label": "%template.settings.templates.hints.path%"
+        },
+        {
+          "token": "{uuid}",
+          "label": "%template.settings.templates.hints.uuid%"
+        },
+        {
+          "token": "{cursor}",
+          "label": "%template.settings.templates.hints.cursor%"
+        }
+      ]
+    },
+    {
+      "key": "insertMode",
+      "label": "%template.settings.insertMode.label%",
+      "type": "select",
+      "default": "cursor",
+      "options": [
+        {
+          "value": "cursor",
+          "label": "%template.settings.insertMode.options.cursor%"
+        },
+        {
+          "value": "append",
+          "label": "%template.settings.insertMode.options.append%"
+        },
+        {
+          "value": "replace",
+          "label": "%template.settings.insertMode.options.replace%"
+        }
+      ]
+    },
+    {
+      "key": "dateFormat",
+      "label": "%template.settings.dateFormat.label%",
+      "type": "select",
+      "default": "iso",
+      "options": [
+        { "value": "iso", "label": "2026-07-09" },
+        { "value": "dot", "label": "2026.07.09" },
+        { "value": "ko", "label": "2026년 7월 9일" }
+      ]
+    }
+  ],
+  "nls": {
+    "default": {
+      "template.name": "템플릿",
+      "template.summary": "자주 쓰는 문서 초기값을 툴바 버튼으로",
+      "template.settingsDescription": "미리 만든 문서를 키워드 치환과 함께 커서 위치에 끼워 넣어요. 템플릿을 여러 개 만들어 두고, 메모 툴바의 📑 버튼으로 골라 삽입합니다.",
+      "template.settings.templates.label": "템플릿",
+      "template.settings.templates.itemLabel": "템플릿",
+      "template.settings.templates.itemNamePlaceholder": "예: 주간회의",
+      "template.settings.templates.itemBodyPlaceholder": "본문을 입력하세요. {today} 같은 키워드를 넣으면 삽입할 때 값으로 바뀝니다.",
+      "template.settings.templates.description": "각 템플릿은 이름과 본문으로 나뉩니다. 본문에 아래 키워드를 넣으면 삽입 시점의 값으로 치환돼요.",
+      "template.settings.templates.hints.today": "오늘 날짜",
+      "template.settings.templates.hints.yesterday": "어제",
+      "template.settings.templates.hints.tomorrow": "내일",
+      "template.settings.templates.hints.today-offset": "N일 뒤(±N)",
+      "template.settings.templates.hints.monday": "이번주 월요일",
+      "template.settings.templates.hints.sunday": "이번주 일요일",
+      "template.settings.templates.hints.time": "현재 시각 HH:MM",
+      "template.settings.templates.hints.datetime": "날짜 + 시각",
+      "template.settings.templates.hints.now": "날짜 + 시:분:초",
+      "template.settings.templates.hints.year": "연",
+      "template.settings.templates.hints.month": "월",
+      "template.settings.templates.hints.day": "일",
+      "template.settings.templates.hints.weekday": "요일",
+      "template.settings.templates.hints.week": "ISO 주차",
+      "template.settings.templates.hints.title": "메모 제목(파일명)",
+      "template.settings.templates.hints.path": "메모 경로",
+      "template.settings.templates.hints.uuid": "임의 UUID",
+      "template.settings.templates.hints.cursor": "삽입 후 커서가 놓일 자리",
+      "template.settings.insertMode.label": "삽입 방식",
+      "template.settings.insertMode.options.cursor": "커서 위치",
+      "template.settings.insertMode.options.append": "문서 끝에 추가",
+      "template.settings.insertMode.options.replace": "전체 교체",
+      "template.settings.dateFormat.label": "날짜 형식"
+    },
+    "en": {
+      "template.name": "Templates",
+      "template.summary": "Toolbar buttons for inserting frequently used document starters",
+      "template.settingsDescription": "Inserts a pre-made document at the cursor, expanding keywords as it goes. Keep several templates and pick one to insert from the 📑 button on the note toolbar.",
+      "template.settings.templates.label": "Templates",
+      "template.settings.templates.itemLabel": "Template",
+      "template.settings.templates.itemNamePlaceholder": "e.g. Weekly meeting",
+      "template.settings.templates.itemBodyPlaceholder": "Enter the body. Keywords like {today} are replaced with real values when inserted.",
+      "template.settings.templates.description": "Each template has a name and a body. Keywords in the body below are replaced with their values at insert time.",
+      "template.settings.templates.hints.today": "Today's date",
+      "template.settings.templates.hints.yesterday": "Yesterday",
+      "template.settings.templates.hints.tomorrow": "Tomorrow",
+      "template.settings.templates.hints.today-offset": "N days from now (±N)",
+      "template.settings.templates.hints.monday": "This week's Monday",
+      "template.settings.templates.hints.sunday": "This week's Sunday",
+      "template.settings.templates.hints.time": "Current time HH:MM",
+      "template.settings.templates.hints.datetime": "Date + time",
+      "template.settings.templates.hints.now": "Date + time:seconds",
+      "template.settings.templates.hints.year": "Year",
+      "template.settings.templates.hints.month": "Month",
+      "template.settings.templates.hints.day": "Day",
+      "template.settings.templates.hints.weekday": "Weekday",
+      "template.settings.templates.hints.week": "ISO week",
+      "template.settings.templates.hints.title": "Note title (filename)",
+      "template.settings.templates.hints.path": "Note path",
+      "template.settings.templates.hints.uuid": "Random UUID",
+      "template.settings.templates.hints.cursor": "Where the cursor lands after insert",
+      "template.settings.insertMode.label": "Insert mode",
+      "template.settings.insertMode.options.cursor": "Cursor position",
+      "template.settings.insertMode.options.append": "Append to end of document",
+      "template.settings.insertMode.options.replace": "Replace entire document",
+      "template.settings.dateFormat.label": "Date format"
+    }
+  }
+}

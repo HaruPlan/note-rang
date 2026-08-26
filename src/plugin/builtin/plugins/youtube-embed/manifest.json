@@ -1,0 +1,19 @@
+{
+  "id": "youtube-embed",
+  "name": "%youtube-embed.name%",
+  "version": "1.0.0",
+  "summary": "%youtube-embed.summary%",
+  "kind": "action",
+  "entry": "main.js",
+  "permissions": ["editor", "embed:www.youtube-nocookie.com"],
+  "nls": {
+    "default": {
+      "youtube-embed.name": "유튜브 임베드",
+      "youtube-embed.summary": "youtube 코드펜스를 노트 속 플레이어로"
+    },
+    "en": {
+      "youtube-embed.name": "YouTube Embed",
+      "youtube-embed.summary": "Turns a youtube code fence into an in-note player"
+    }
+  }
+}

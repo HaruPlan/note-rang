@@ -1,0 +1,15 @@
+{
+  "$schema": "../../manifest.schema.json",
+  "id": "example-status-menu",
+  "name": "예제: 상태 아이템 + 컨텍스트 메뉴",
+  "version": "1.0.0",
+  "entry": "main.js",
+  "summary": "툴바에 상태 아이템 하나, 우클릭 메뉴로 그 값을 갱신",
+  "purpose": "addStatusItem·updateStatusItem·addMenuItem의 정본 사용례(ui 권한만)",
+  "llmContext": "상태 아이템 1개(`menu-count`)를 `ui.addStatusItem`으로 등록하고, 컨텍스트 메뉴 항목 1개(`bump`)를 `ui.addMenuItem`으로 등록한다. 메뉴 항목의 run은 클로저 카운터를 올려 `ui.updateStatusItem`으로 그 창의 상태 텍스트를 갱신한다. 상태 아이템 등록은 호스트 스코프(스냅샷에 모임)지만 텍스트 갱신(updateStatusItem)은 창-스코프라 run이 받은 바인딩 memo로 부른다. 권한은 ui 하나뿐(selectedText를 쓰지 않으므로 notes:read 불필요). 메뉴 항목에 when이 없으면 항상 표시된다.",
+  "kind": "action",
+  "permissions": ["ui"],
+  "permissionReasons": {
+    "ui": "상태 아이템과 컨텍스트 메뉴 항목을 등록하고 상태 텍스트를 갱신합니다"
+  }
+}
