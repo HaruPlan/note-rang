@@ -2346,7 +2346,7 @@ dependencies = [
 
 [[package]]
 name = "note-rang"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "notify",
  "objc2",

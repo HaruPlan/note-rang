@@ -1,6 +1,6 @@
 [package]
 name = "note-rang"
-version = "0.0.3"
+version = "0.0.4"
 description = "note-rang — floating Markdown sticky notes"
 authors = ["HaruPlan"]
 edition = "2021"
